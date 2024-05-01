@@ -39,6 +39,10 @@ class _NewItemScreenState extends State<NewItemScreen> {
         ),
       );
 
+      print(response.statusCode);
+      print(response.body);
+
+      if (!context.mounted) return;
       Navigator.of(context).pop();
     }
   }
