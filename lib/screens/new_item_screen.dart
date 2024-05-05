@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shopping_list_app/data/categories.dart';
 import 'package:shopping_list_app/enums.dart';
 import 'package:http/http.dart' as http;
+import 'package:shopping_list_app/models/grocery_item.dart';
 
 class NewItemScreen extends StatefulWidget {
   const NewItemScreen({super.key});
@@ -42,8 +43,20 @@ class _NewItemScreenState extends State<NewItemScreen> {
       print(response.statusCode);
       print(response.body);
 
-      if (!context.mounted) return;
-      Navigator.of(context).pop();
+      if (!context.mounted) {
+        return;
+      }
+
+      final Map<String, dynamic> resData = json.decode(response.body);
+
+      Navigator.of(context).pop(
+        GroceryItem(
+          id: resData['name'],
+          name: _enteredName,
+          quantity: _enteredQuantity,
+          category: _selectedCategory,
+        ),
+      );
     }
   }
 

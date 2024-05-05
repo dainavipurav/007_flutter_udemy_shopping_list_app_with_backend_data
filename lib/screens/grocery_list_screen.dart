@@ -51,7 +51,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   void _addNewItem() async {
-    await Navigator.push(
+    final newItem = await Navigator.push<GroceryItem>(
       context,
       MaterialPageRoute(
         builder: (context) {
@@ -60,7 +60,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
       ),
     );
 
-    _loadItems();
+    if (newItem == null) {
+      return;
+    }
+
+    setState(() {
+      _groceryItems.add(newItem);
+    });
   }
 
   @override
