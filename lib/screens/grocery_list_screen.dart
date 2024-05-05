@@ -18,6 +18,7 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   List<GroceryItem> _groceryItems = [];
   bool _isLoading = true;
+  String? _error;
 
   void _loadItems() async {
     final uri = Uri.https(
@@ -25,6 +26,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
       'shopping-list.json',
     );
     final response = await http.get(uri);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        _error = 'Error occurred while fetching data';
+      });
+    }
+
     final Map<String, dynamic> listData = json.decode(response.body);
 
     List<GroceryItem> loadedItems = [];
@@ -89,6 +97,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (_isLoading) {
       content = const Center(
         child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_error != null) {
+      content = Center(
+        child: Text(_error!),
       );
     }
 
