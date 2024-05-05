@@ -17,6 +17,7 @@ class CategoryScreen extends StatefulWidget {
 
 class _CategoryScreenState extends State<CategoryScreen> {
   List<GroceryItem> _groceryItems = [];
+  bool _isLoading = true;
 
   void _loadItems() async {
     final uri = Uri.https(
@@ -45,6 +46,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
     setState(() {
       _groceryItems = loadedItems;
+      _isLoading = false;
     });
 
     print(response.body);
@@ -77,20 +79,25 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget content = GroceryList(
-      groceryItems: _groceryItems,
-      onDismissed: onDismissed,
+    Widget content = const Center(
+      child: Text(
+        'You got no items yet!',
+        style: TextStyle(color: Colors.white, fontSize: 20),
+      ),
     );
 
-    if (_groceryItems.isEmpty) {
+    if (_isLoading) {
       content = const Center(
-        child: Text(
-          'You got no items yet!',
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+        child: CircularProgressIndicator(),
       );
     }
 
+    if (_groceryItems.isNotEmpty) {
+      content = GroceryList(
+        groceryItems: _groceryItems,
+        onDismissed: onDismissed,
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Groceries'),
