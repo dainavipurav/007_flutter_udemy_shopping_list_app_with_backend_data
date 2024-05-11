@@ -79,6 +79,33 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
   }
 
+  Future<void> _removeItem(GroceryItem groceryItem) async {
+    int index = _groceryItems.indexOf(groceryItem);
+
+    final uri = Uri.https(
+      'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
+      'shopping-list/${groceryItem.id}.json',
+    );
+
+    setState(() {
+      _groceryItems.remove(groceryItem);
+    });
+
+    final response = await http.delete(uri);
+
+    if (response.statusCode >= 400) {
+      setState(() {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error occurred while deleting item.'),
+          ),
+        );
+
+        _groceryItems.insert(index, groceryItem);
+      });
+    }
+  }
+
   @override
   void initState() {
     _loadItems();
@@ -109,7 +136,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     if (_groceryItems.isNotEmpty) {
       content = GroceryList(
         groceryItems: _groceryItems,
-        onDismissed: onDismissed,
+        onDismissed: (groceryItem) {
+          _removeItem(groceryItem);
+        },
       );
     }
     return Scaffold(
@@ -123,62 +152,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
         ],
       ),
       body: content,
-    );
-  }
-
-  Future<void> onDismissed(groceryItem) async {
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Delete Item'),
-          content: const Text(
-            'Are you sure you want to delete this grocery item?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                int index = _groceryItems.indexOf(groceryItem);
-                Navigator.of(ctx).pop();
-                setState(() {
-                  _groceryItems.remove(groceryItem);
-                  _groceryItems.insert(index, groceryItem);
-                });
-              },
-              child: const Text('No'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-
-                int index = _groceryItems.indexOf(groceryItem);
-
-                setState(() {
-                  _groceryItems.remove(groceryItem);
-                });
-
-                ScaffoldMessenger.of(context).clearSnackBars();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Item deleted successfully'),
-                    action: SnackBarAction(
-                      label: 'Undo',
-                      onPressed: () {
-                        setState(() {
-                          _groceryItems.remove(groceryItem);
-                          _groceryItems.insert(index, groceryItem);
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: const Text('Yes'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
