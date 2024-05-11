@@ -33,6 +33,13 @@ class _CategoryScreenState extends State<CategoryScreen> {
       });
     }
 
+    if (response.body == 'null') {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     final Map<String, dynamic> listData = json.decode(response.body);
 
     List<GroceryItem> loadedItems = [];
