@@ -21,50 +21,56 @@ class _CategoryScreenState extends State<CategoryScreen> {
   String? _error;
 
   void _loadItems() async {
-    final uri = Uri.https(
-      'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
-      'shopping-list.json',
-    );
-    final response = await http.get(uri);
+    try {
+      final uri = Uri.https(
+        'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
+        'shopping-list.json',
+      );
+      final response = await http.get(uri);
 
-    if (response.statusCode >= 400) {
-      setState(() {
-        _error = 'Error occurred while fetching data';
-      });
-    }
+      if (response.statusCode >= 400) {
+        setState(() {
+          _error = 'Error occurred while fetching data';
+        });
+      }
 
-    if (response.body == 'null') {
+      if (response.body == 'null') {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final Map<String, dynamic> listData = json.decode(response.body);
+
+      List<GroceryItem> loadedItems = [];
+      for (final item in listData.entries) {
+        final category = categories.entries
+            .firstWhere(
+              (element) => element.value.name == item.value['category'],
+            )
+            .value;
+        loadedItems.add(
+          GroceryItem(
+            id: item.key,
+            name: item.value['name'],
+            quantity: item.value['quantity'],
+            category: category,
+          ),
+        );
+      }
+
       setState(() {
+        _groceryItems = loadedItems;
         _isLoading = false;
       });
-      return;
+
+      print(response.body);
+    } catch (error) {
+      setState(() {
+        _error = 'Something went wrong, please try again later.';
+      });
     }
-
-    final Map<String, dynamic> listData = json.decode(response.body);
-
-    List<GroceryItem> loadedItems = [];
-    for (final item in listData.entries) {
-      final category = categories.entries
-          .firstWhere(
-            (element) => element.value.name == item.value['category'],
-          )
-          .value;
-      loadedItems.add(
-        GroceryItem(
-          id: item.key,
-          name: item.value['name'],
-          quantity: item.value['quantity'],
-          category: category,
-        ),
-      );
-    }
-
-    setState(() {
-      _groceryItems = loadedItems;
-      _isLoading = false;
-    });
-
-    print(response.body);
   }
 
   void _addNewItem() async {
@@ -89,27 +95,39 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Future<void> _removeItem(GroceryItem groceryItem) async {
     int index = _groceryItems.indexOf(groceryItem);
 
-    final uri = Uri.https(
-      'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
-      'shopping-list/${groceryItem.id}.json',
-    );
+    try {
+      final uri = Uri.https(
+        'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
+        'shopping-list/${groceryItem.id}.json',
+      );
 
-    setState(() {
-      _groceryItems.remove(groceryItem);
-    });
-
-    final response = await http.delete(uri);
-
-    if (response.statusCode >= 400) {
       setState(() {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error occurred while deleting item.'),
-          ),
-        );
-
-        _groceryItems.insert(index, groceryItem);
+        _groceryItems.remove(groceryItem);
       });
+
+      final response = await http.delete(uri);
+
+      if (response.statusCode >= 400) {
+        setState(() {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Error occurred while deleting item.'),
+            ),
+          );
+
+          _groceryItems.insert(index, groceryItem);
+        });
+      }
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Something went wrong, please try again later.'),
+        ),
+      );
     }
   }
 

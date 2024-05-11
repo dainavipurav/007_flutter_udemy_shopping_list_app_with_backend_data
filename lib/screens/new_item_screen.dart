@@ -22,46 +22,61 @@ class _NewItemScreenState extends State<NewItemScreen> {
 
   Future<void> _saveItem() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+      try {
+        _formKey.currentState!.save();
 
-      setState(() {
-        _isSending = true;
-      });
-      final uri = Uri.https(
-        'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
-        'shopping-list.json',
-      );
-      final response = await http.post(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(
-          {
-            'name': _enteredName,
-            'quantity': _enteredQuantity,
-            'category': _selectedCategory.name,
+        setState(() {
+          _isSending = true;
+        });
+        final uri = Uri.https(
+          'flutter-shopping-list-ap-a3013-default-rtdb.firebaseio.com',
+          'shopping-list.json',
+        );
+        final response = await http.post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
           },
-        ),
-      );
+          body: json.encode(
+            {
+              'name': _enteredName,
+              'quantity': _enteredQuantity,
+              'category': _selectedCategory.name,
+            },
+          ),
+        );
 
-      print(response.statusCode);
-      print(response.body);
+        print(response.statusCode);
+        print(response.body);
 
-      if (!context.mounted) {
-        return;
+        if (!context.mounted) {
+          return;
+        }
+
+        final Map<String, dynamic> resData = json.decode(response.body);
+
+        if (!mounted) return;
+        Navigator.of(context).pop(
+          GroceryItem(
+            id: resData['name'],
+            name: _enteredName,
+            quantity: _enteredQuantity,
+            category: _selectedCategory,
+          ),
+        );
+      } catch (error) {
+        setState(() {
+          _isSending = false;
+        });
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Something went wrong, please try again later.'),
+          ),
+        );
       }
-
-      final Map<String, dynamic> resData = json.decode(response.body);
-
-      Navigator.of(context).pop(
-        GroceryItem(
-          id: resData['name'],
-          name: _enteredName,
-          quantity: _enteredQuantity,
-          category: _selectedCategory,
-        ),
-      );
     }
   }
 
